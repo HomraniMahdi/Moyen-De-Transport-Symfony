@@ -38,7 +38,7 @@ class MoyenDeTransportController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($moyenDeTransport);
             $entityManager->flush();
-
+.
 
             return $this->redirectToRoute('moyen_de_transport_index', [], Response::HTTP_SEE_OTHER);
         }
