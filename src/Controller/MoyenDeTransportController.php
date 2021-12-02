@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\api\MailerApi;
+use App\api\TwilioApi;
 use App\Entity\MoyenDeTransport;
 use App\Form\MoyenDeTransportType;
 use App\Repository\MoyenDeTransportRepository;
@@ -9,7 +11,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * @Route("/moyen/de/transport")
@@ -28,8 +33,9 @@ class MoyenDeTransportController extends AbstractController
 
     /**
      * @Route("/new", name="moyen_de_transport_new", methods={"GET", "POST"})
+     * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
      */
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager,MailerInterface $mailer): Response
     {
         $moyenDeTransport = new MoyenDeTransport();
         $form = $this->createForm(MoyenDeTransportType::class, $moyenDeTransport);
@@ -38,7 +44,12 @@ class MoyenDeTransportController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($moyenDeTransport);
             $entityManager->flush();
-.
+
+
+            $email = new MailerApi();
+            $twilio = new TwilioApi('ACcb016d5d5b4e05ea366d44ec5227e10c','ac4747a918aeb184c86281050488de22','+12565679612');
+            $twilio->sendSMS('+21658932889','Moyen de Transport Créer avec success');
+            $email->sendEmail( $mailer,'tunisport32@gmail.com','mahdi.homrani@esprit.tn','testing email','Moyen de Transport Créer avec success');
 
             return $this->redirectToRoute('moyen_de_transport_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -47,6 +58,8 @@ class MoyenDeTransportController extends AbstractController
             'moyen_de_transport' => $moyenDeTransport,
             'form' => $form->createView(),
         ]);
+
+
     }
 
     /**
@@ -78,6 +91,7 @@ class MoyenDeTransportController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
+
 
     /**
      * @Route("/{id}", name="moyen_de_transport_delete", methods={"POST"})
