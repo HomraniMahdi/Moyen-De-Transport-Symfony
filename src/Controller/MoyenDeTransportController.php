@@ -16,6 +16,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use MercurySeries\FlashyBundle\FlashyNotifier;
+use Knp\Component\Pager\PaginatorInterface;
 
 /**
  * @Route("/moyen/de/transport")
@@ -25,10 +26,18 @@ class MoyenDeTransportController extends AbstractController
     /**
      * @Route("/", name="moyen_de_transport_index", methods={"GET"})
      */
-    public function index(MoyenDeTransportRepository $moyenDeTransportRepository): Response
+    public function index(MoyenDeTransportRepository $moyenDeTransportRepository,PaginatorInterface $paginator,Request $request): Response
     {
+        $donnees = $this->getDoctrine()->getRepository(MoyenDeTransport::class)->findBy([],['Prix_Achat' => 'asc']);
+
+        $moyen_de_transports = $paginator->paginate(
+            $donnees, // Requête contenant les données à paginer (ici nos articles)
+            $request->query->getInt('page', 1), // Numéro de la page en cours, passé dans l'URL, 1 si aucune page
+            10 // Nombre de résultats par page
+        );
+
         return $this->render('moyen_de_transport/index.html.twig', [
-            'moyen_de_transports' => $moyenDeTransportRepository->findAll(),
+            'moyen_de_transports' => $moyen_de_transports
         ]);
     }
 
@@ -51,7 +60,8 @@ class MoyenDeTransportController extends AbstractController
             $twilio = new TwilioApi('ACcb016d5d5b4e05ea366d44ec5227e10c','ac4747a918aeb184c86281050488de22','+12565679612');
             $twilio->sendSMS('+21658932889','Moyen de Transport Créer avec success');
             $email->sendEmail( $mailer,'tunisport32@gmail.com','mahdi.homrani@esprit.tn','testing email','Moyen de Transport Créer avec success');
-            $flashy->success(' Facture Created!', 'http://your-awesome-link.com');
+            $this->addFlash(
+                'info' ,' Moyen de Transport ajoute !');
 
             return $this->redirectToRoute('moyen_de_transport_index', [], Response::HTTP_SEE_OTHER);
         }
