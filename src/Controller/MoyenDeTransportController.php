@@ -15,6 +15,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use MercurySeries\FlashyBundle\FlashyNotifier;
 
 /**
  * @Route("/moyen/de/transport")
@@ -35,7 +36,7 @@ class MoyenDeTransportController extends AbstractController
      * @Route("/new", name="moyen_de_transport_new", methods={"GET", "POST"})
      * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
      */
-    public function new(Request $request, EntityManagerInterface $entityManager,MailerInterface $mailer): Response
+    public function new(Request $request, EntityManagerInterface $entityManager,MailerInterface $mailer,FlashyNotifier $flashy): Response
     {
         $moyenDeTransport = new MoyenDeTransport();
         $form = $this->createForm(MoyenDeTransportType::class, $moyenDeTransport);
@@ -50,6 +51,7 @@ class MoyenDeTransportController extends AbstractController
             $twilio = new TwilioApi('ACcb016d5d5b4e05ea366d44ec5227e10c','ac4747a918aeb184c86281050488de22','+12565679612');
             $twilio->sendSMS('+21658932889','Moyen de Transport Créer avec success');
             $email->sendEmail( $mailer,'tunisport32@gmail.com','mahdi.homrani@esprit.tn','testing email','Moyen de Transport Créer avec success');
+            $flashy->success(' Facture Created!', 'http://your-awesome-link.com');
 
             return $this->redirectToRoute('moyen_de_transport_index', [], Response::HTTP_SEE_OTHER);
         }
