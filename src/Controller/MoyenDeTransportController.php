@@ -17,6 +17,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use MercurySeries\FlashyBundle\FlashyNotifier;
 use Knp\Component\Pager\PaginatorInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 /**
  * @Route("/moyen/de/transport")
@@ -34,12 +36,56 @@ class MoyenDeTransportController extends AbstractController
             $donnees, // Requête contenant les données à paginer (ici nos articles)
             $request->query->getInt('page', 1), // Numéro de la page en cours, passé dans l'URL, 1 si aucune page
             10 // Nombre de résultats par page
+
         );
 
         return $this->render('moyen_de_transport/index.html.twig', [
             'moyen_de_transports' => $moyen_de_transports
         ]);
     }
+
+
+    /**
+     * @Route("/ListMoyen", name="moyen_transport_list", methods={"GET"})
+     */
+    public function listMoyen(MoyenDeTransportRepository $moyenDeTransportRepository): Response
+    {
+
+        // Configure Dompdf according to your needs
+        $pdfOptions = new Options();
+        $pdfOptions->set('defaultFont', 'Arial');
+
+        // Instantiate Dompdf with our options
+        $dompdf = new Dompdf($pdfOptions);
+        $moyen_de_transports = $moyenDeTransportRepository->findAll();
+
+
+        // Retrieve the HTML generated in our twig file
+        $html = $this->renderView('moyen_de_transport/ListMoyenTransport.html.twig', [
+            'moyen_de_transports' => $moyen_de_transports
+        ]);
+
+        // Load HTML to Dompdf
+        $dompdf->loadHtml($html);
+
+        // (Optional) Setup the paper size and orientation 'portrait' or 'portrait'
+        $dompdf->setPaper('A4', 'portrait');
+
+        // Render the HTML as PDF
+        $dompdf->render();
+
+        // Output the generated PDF to Browser (force download)
+        $dompdf->stream("MoyenTransport.pdf", [
+            "Attachment" => true
+        ]);
+
+        return $this->render('moyen_de_transport/ListMoyenTransport.html.twig', [
+            'moyen_de_transports' => $moyen_de_transports
+        ]);
+    }
+
+
+
 
     /**
      * @Route("/new", name="moyen_de_transport_new", methods={"GET", "POST"})
@@ -104,7 +150,6 @@ class MoyenDeTransportController extends AbstractController
         ]);
     }
 
-
     /**
      * @Route("/{id}", name="moyen_de_transport_delete", methods={"POST"})
      */
@@ -117,4 +162,6 @@ class MoyenDeTransportController extends AbstractController
 
         return $this->redirectToRoute('moyen_de_transport_index', [], Response::HTTP_SEE_OTHER);
     }
+
+
 }
